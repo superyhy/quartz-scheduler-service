@@ -1,0 +1,90 @@
+server:
+  port: 9708
+eureka:
+  client:
+    enabled: false
+
+mybatis-plus:
+  configuration:
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+  global-config:
+    db-config:
+      logic-delete-field: deleted # ???????????????????????@TableLogic??
+      logic-delete-value: 1 # ??????
+      logic-not-delete-value: 0 # ??????
+  mapper-locations:
+    - classpath*:/mapper/**/*.xml
+    - classpath*:com/gitee/sunchenbin/mybatis/actable/mapping/*/*.xml
+actable:
+  table:
+    auto: update
+  model:
+    pack: com.keeson.quartzschedulerservice.domain.entity
+  database:
+    type: mysql
+
+spring:
+  servlet:
+    multipart:
+      max-file-size: 80MB
+      max-request-size: 100MB
+  application:
+    name: quartz-scheduler-service
+  cloud:
+    nacos:
+      config:
+        enabled: false
+        refresh-enabled: false
+      discovery:
+        server-addr: 192.168.23.43:31028
+        group: LOCAL-YHY
+  datasource:
+    dynamic:
+      # ???????????????
+      hikari:
+        connection-timeout: 30000
+        max-lifetime: 1800000
+        max-pool-size: 15
+        min-idle: 5
+        connection-test-query: select 1
+        pool-name: FebsHikariCP
+      # ???????
+      primary: primary
+      datasource:
+        # ???-1???? primary ????
+        primary:
+          username: root
+          password: 12345
+          driver-class-name: com.mysql.cj.jdbc.Driver
+          url: jdbc:mysql://localhost:3306/quartz_task?characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
+  redis:
+    host: 192.168.23.43
+    port: 33021
+    password: redis123
+    timeout: 6000
+    jedis:
+      pool:
+        min-idle: 8
+        max-idle: 500
+        max-active: 2000
+        max-wait: 10000
+
+logging:
+  level:
+    root: info
+    com.netflix.discovery.shared.resolver.aws.ConfigClusterResolver: WARN
+
+dubbo:
+  application:
+    name: distribution-service
+    serialize-check-status: DISABLE
+  scan:
+    base-packages: com.keeson.quartzschedulerservice.domain.service # ??Dubbo????????
+  protocol:
+    name: dubbo
+    port: -1
+    serialization: kryo
+  registry:
+    address: nacos://192.168.23.43:31028
+    client: nacos
+    group: LOCAL-YHY
