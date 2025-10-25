@@ -97,6 +97,8 @@ logging:
   level:
     root: info
     com.netflix.discovery.shared.resolver.aws.ConfigClusterResolver: WARN
+    # 关闭dubbo日志打印
+    org.apache.dubbo: error
 
 dubbo:
   application:
