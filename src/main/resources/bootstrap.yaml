@@ -9,9 +9,9 @@ mybatis-plus:
     log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
   global-config:
     db-config:
-      logic-delete-field: deleted # ???????????????????????@TableLogic??
-      logic-delete-value: 1 # ??????
-      logic-not-delete-value: 0 # ??????
+      logic-delete-field: deleted
+      logic-delete-value: 1
+      logic-not-delete-value: 0
   mapper-locations:
     - classpath*:/mapper/**/*.xml
     - classpath*:com/gitee/sunchenbin/mybatis/actable/mapping/*/*.xml
@@ -40,7 +40,6 @@ spring:
         group: LOCAL-YHY
   datasource:
     dynamic:
-      # ???????????????
       hikari:
         connection-timeout: 30000
         max-lifetime: 1800000
@@ -48,10 +47,8 @@ spring:
         min-idle: 5
         connection-test-query: select 1
         pool-name: FebsHikariCP
-      # ???????
       primary: primary
       datasource:
-        # ???-1???? primary ????
         primary:
           username: root
           password: 12345
@@ -79,7 +76,7 @@ dubbo:
     name: distribution-service
     serialize-check-status: DISABLE
   scan:
-    base-packages: com.keeson.quartzschedulerservice.domain.service # ??Dubbo????????
+    base-packages: com.keeson.quartzschedulerservice.domain.service
   protocol:
     name: dubbo
     port: -1

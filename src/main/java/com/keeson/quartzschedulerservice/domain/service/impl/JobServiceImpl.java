@@ -1,9 +1,12 @@
 package com.keeson.quartzschedulerservice.domain.service.impl;
 
+import com.alibaba.fastjson.JSONObject;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.keeson.quartzschedulerservice.domain.entity.domain.JobAndTrigger;
+import com.keeson.quartzschedulerservice.domain.entity.form.JobDubboForm;
 import com.keeson.quartzschedulerservice.domain.entity.form.JobForm;
+import com.keeson.quartzschedulerservice.domain.job.DubboJob;
 import com.keeson.quartzschedulerservice.domain.service.JobService;
 import com.keeson.quartzschedulerservice.infrastructure.data.mybatis.JobMapper;
 import com.keeson.quartzschedulerservice.infrastructure.util.JobUtil;
@@ -57,6 +60,25 @@ public class JobServiceImpl implements JobService {
             log.error("【定时任务】创建失败！", e);
             throw new Exception("【定时任务】创建失败！");
         }
+    }
+
+    @Override
+    public void addDubboJob(JobDubboForm jobDubboForm) throws Exception {
+        JobDetail jobDetail = JobBuilder.newJob(DubboJob.class)
+                .withIdentity(jobDubboForm.getMethodName(), jobDubboForm.getJobGroupName())
+                .usingJobData("interfaceName", jobDubboForm.getInterfaceName())
+                .usingJobData("methodName", jobDubboForm.getMethodName())
+                .usingJobData("paramTypes", JSONObject.toJSONString(jobDubboForm.getParamTypes()))
+                .usingJobData("paramValues", JSONObject.toJSONString(jobDubboForm.getParamValues()))
+                .build();
+
+        CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(jobDubboForm.getCronExpression());
+        CronTrigger trigger = TriggerBuilder.newTrigger()
+                .withIdentity(jobDubboForm.getMethodName() + "Trigger", jobDubboForm.getJobGroupName())
+                .withSchedule(scheduleBuilder)
+                .build();
+
+        scheduler.scheduleJob(jobDetail, trigger);
     }
 
     /**

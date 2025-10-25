@@ -3,6 +3,7 @@ package com.keeson.quartzschedulerservice.domain.service;
 
 import com.github.pagehelper.PageInfo;
 import com.keeson.quartzschedulerservice.domain.entity.domain.JobAndTrigger;
+import com.keeson.quartzschedulerservice.domain.entity.form.JobDubboForm;
 import com.keeson.quartzschedulerservice.domain.entity.form.JobForm;
 import org.quartz.SchedulerException;
 
@@ -22,6 +23,14 @@ public interface JobService {
      * @throws Exception 异常
      */
     void addJob(JobForm form) throws Exception;
+
+    /**
+     * 保存Dubbo定时任务
+     *
+     * @param jobDubboForm
+     * @throws Exception
+     */
+    void addDubboJob(JobDubboForm jobDubboForm) throws Exception;
 
     /**
      * 删除定时任务

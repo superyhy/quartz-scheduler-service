@@ -6,6 +6,7 @@ import cn.hutool.core.util.StrUtil;
 import com.github.pagehelper.PageInfo;
 import com.keeson.quartzschedulerservice.controller.common.ApiResponse;
 import com.keeson.quartzschedulerservice.domain.entity.domain.JobAndTrigger;
+import com.keeson.quartzschedulerservice.domain.entity.form.JobDubboForm;
 import com.keeson.quartzschedulerservice.domain.entity.form.JobForm;
 import com.keeson.quartzschedulerservice.domain.service.JobService;
 import lombok.extern.slf4j.Slf4j;
@@ -52,10 +53,27 @@ public class JobController {
     }
 
     /**
+     * 保存dubbo定时任务
+     *
+     * @param form
+     * @return
+     */
+    @PostMapping("/add_dubbo")
+    public ResponseEntity<ApiResponse> addDubboJob(@RequestBody @Valid JobDubboForm form) {
+        try {
+            jobService.addDubboJob(form);
+        } catch (Exception e) {
+            log.error("+++++", e);
+            return new ResponseEntity<>(ApiResponse.msg(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+        }
+        return new ResponseEntity<>(ApiResponse.msg("操作成功"), HttpStatus.CREATED);
+    }
+
+    /**
      * 删除定时任务
      */
     @DeleteMapping
-    public ResponseEntity<ApiResponse> deleteJob(JobForm form) throws SchedulerException {
+    public ResponseEntity<ApiResponse> deleteJob(@RequestBody @Valid JobForm form) throws SchedulerException {
         if (StrUtil.hasBlank(form.getJobGroupName(), form.getJobClassName())) {
             return new ResponseEntity<>(ApiResponse.msg("参数不能为空"), HttpStatus.BAD_REQUEST);
         }
