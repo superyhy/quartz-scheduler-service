@@ -1,5 +1,6 @@
 server:
   port: 9708
+
 eureka:
   client:
     enabled: false
@@ -15,6 +16,7 @@ mybatis-plus:
   mapper-locations:
     - classpath*:/mapper/**/*.xml
     - classpath*:com/gitee/sunchenbin/mybatis/actable/mapping/*/*.xml
+
 actable:
   table:
     auto: update
@@ -38,6 +40,7 @@ spring:
       discovery:
         server-addr: 192.168.23.43:31028
         group: LOCAL-YHY
+
   datasource:
     dynamic:
       hikari:
@@ -54,6 +57,7 @@ spring:
           password: 12345
           driver-class-name: com.mysql.cj.jdbc.Driver
           url: jdbc:mysql://localhost:3306/quartz_task?characterEncoding=UTF-8&useSSL=false&serverTimezone=Asia/Shanghai&rewriteBatchedStatements=true
+
   redis:
     host: 192.168.23.43
     port: 33021
@@ -65,6 +69,29 @@ spring:
         max-idle: 500
         max-active: 2000
         max-wait: 10000
+
+  # quartz定时任务持久化配置
+  quartz:
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: never
+    properties:
+      org:
+        quartz:
+          scheduler:
+            instanceName: quartzScheduler
+            instanceId: AUTO
+          jobStore:
+            class: org.quartz.impl.jdbcjobstore.JobStoreTX
+            driverDelegateClass: org.quartz.impl.jdbcjobstore.StdJDBCDelegate
+            useProperties: false
+            tablePrefix: QRTZ_
+            isClustered: true
+            clusterCheckinInterval: 20000
+          threadPool:
+            class: org.quartz.simpl.SimpleThreadPool
+            threadCount: 10
+            threadPriority: 5
 
 logging:
   level:

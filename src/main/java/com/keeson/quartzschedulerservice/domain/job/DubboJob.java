@@ -1,7 +1,6 @@
 package com.keeson.quartzschedulerservice.domain.job;
 
 import com.alibaba.fastjson.JSONArray;
-import com.alibaba.fastjson.JSONObject;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.dubbo.config.ReferenceConfig;
 import org.apache.dubbo.rpc.service.GenericService;
@@ -32,8 +31,7 @@ public class DubboJob implements Job {
 
         try {
             GenericService dubbboGenericService = getGenericService(interfaceName);
-            Object dubboResult = dubbboGenericService.$invoke(methodName, paramTypes.toArray(new String[0]), paramValues.toArray());
-            log.info("DubboJob executed successfully: {}.{},{}", interfaceName, methodName, JSONObject.toJSONString(dubboResult));
+            dubbboGenericService.$invoke(methodName, paramTypes.toArray(new String[0]), paramValues.toArray());
         } catch (Exception e) {
             log.error("DubboJob execution failed", e);
         }

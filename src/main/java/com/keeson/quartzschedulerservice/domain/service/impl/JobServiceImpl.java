@@ -64,21 +64,31 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public void addDubboJob(JobDubboForm jobDubboForm) throws Exception {
+        // 启动调度器
+        scheduler.start();
+
         JobDetail jobDetail = JobBuilder.newJob(DubboJob.class)
-                .withIdentity(jobDubboForm.getMethodName(), jobDubboForm.getJobGroupName())
+                .withIdentity(jobDubboForm.getInterfaceName() + ":" + jobDubboForm.getMethodName(), jobDubboForm.getJobGroupName())
+                .withDescription(jobDubboForm.getJobDescribe())
                 .usingJobData("interfaceName", jobDubboForm.getInterfaceName())
                 .usingJobData("methodName", jobDubboForm.getMethodName())
                 .usingJobData("paramTypes", JSONObject.toJSONString(jobDubboForm.getParamTypes()))
                 .usingJobData("paramValues", JSONObject.toJSONString(jobDubboForm.getParamValues()))
+                .storeDurably(true)
                 .build();
 
         CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(jobDubboForm.getCronExpression());
         CronTrigger trigger = TriggerBuilder.newTrigger()
-                .withIdentity(jobDubboForm.getMethodName() + "Trigger", jobDubboForm.getJobGroupName())
+                .withDescription(jobDubboForm.getJobDescribe())
+                .withIdentity(jobDubboForm.getInterfaceName() + ":" + jobDubboForm.getMethodName(), jobDubboForm.getJobGroupName())
                 .withSchedule(scheduleBuilder)
                 .build();
-
-        scheduler.scheduleJob(jobDetail, trigger);
+        try {
+            scheduler.scheduleJob(jobDetail, trigger);
+        } catch (Exception e) {
+            log.error("创建dubbo定时任务失败", e);
+            throw new Exception("创建dubbo定时任务失败");
+        }
     }
 
     /**

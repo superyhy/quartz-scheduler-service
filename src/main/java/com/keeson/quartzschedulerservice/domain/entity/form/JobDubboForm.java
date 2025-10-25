@@ -15,11 +15,15 @@ import java.util.List;
 @Data
 public class JobDubboForm {
     /**
-     * 定时任务组名
+     * 定时任务描述
+     */
+    @NotBlank(message = "任务描述不能为空")
+    private String jobDescribe;
+    /**
+     * 定时任务组名(一般为dubbo接口的项目名称)
      */
     @NotBlank(message = "任务组名不能为空")
     private String jobGroupName;
-
     /**
      * cron表达式
      */
@@ -31,13 +35,11 @@ public class JobDubboForm {
      */
     @NotBlank(message = "接口名不能为空")
     private String interfaceName;
-
     /**
-     * 方法名
+     * 方法名(请保证接口名+方法名唯一)
      */
     @NotBlank(message = "方法名不能为空")
     private String methodName;
-
     /**
      * 参数类型（如 java.lang.String）
      */
