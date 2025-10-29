@@ -1,13 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>com.keeson</groupId>
         <artifactId>bc-parent</artifactId>
         <version>1.0.0.RELEASE</version>
-        <relativePath>../pom.xml</relativePath>
     </parent>
+
     <artifactId>quartz-scheduler-service</artifactId>
     <version>1.0.0</version>
     <name>quartz-scheduler-service</name>
@@ -15,89 +16,24 @@
 
     <properties>
         <java.version>1.8</java.version>
-        <mybatis.version>3.5.7</mybatis.version>
-        <jsqlparser.version>4.7</jsqlparser.version>
     </properties>
 
-    <!-- 统一管理版本 -->
-    <dependencyManagement>
-        <dependencies>
-            <dependency>
-                <groupId>com.baomidou</groupId>
-                <artifactId>mybatis-plus-core</artifactId>
-                <version>${mybatis.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.baomidou</groupId>
-                <artifactId>mybatis-plus-extension</artifactId>
-                <version>${mybatis.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>com.github.jsqlparser</groupId>
-                <artifactId>jsqlparser</artifactId>
-                <version>${jsqlparser.version}</version>
-            </dependency>
-        </dependencies>
-    </dependencyManagement>
-
     <dependencies>
-        <!-- 公共模块 -->
         <dependency>
             <groupId>com.keeson</groupId>
             <artifactId>common</artifactId>
             <version>1.0.5.RELEASE</version>
             <scope>compile</scope>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.baomidou</groupId>
-                    <artifactId>mybatis-plus-annotation</artifactId>
-                </exclusion>
-                <exclusion>
-                    <groupId>com.github.jsqlparser</groupId>
-                    <artifactId>jsqlparser</artifactId>
-                </exclusion>
-            </exclusions>
         </dependency>
-
-        <!-- MyBatis-Plus -->
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-annotation</artifactId>
-            <version>${mybatis.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-core</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>com.baomidou</groupId>
-            <artifactId>mybatis-plus-extension</artifactId>
-        </dependency>
-
-        <!-- 强制使用新版 JSqlParser -->
-        <dependency>
-            <groupId>com.github.jsqlparser</groupId>
-            <artifactId>jsqlparser</artifactId>
-        </dependency>
-
-        <!-- 数据源依赖 -->
         <dependency>
             <groupId>com.baomidou</groupId>
             <artifactId>dynamic-datasource-spring-boot-starter</artifactId>
             <version>3.3.2</version>
         </dependency>
-        <!--dubbo相关依赖-->
         <dependency>
-            <groupId>org.apache.dubbo</groupId>
-            <artifactId>dubbo</artifactId>
-            <version>3.2.0</version>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-configuration-processor</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.apache.dubbo.extensions</groupId>
-            <artifactId>dubbo-serialization-kryo</artifactId>
-            <version>3.2.0</version>
-        </dependency>
-        <!--nacos依赖-->
         <dependency>
             <groupId>com.alibaba.cloud</groupId>
             <artifactId>spring-cloud-starter-alibaba-nacos-config</artifactId>
@@ -107,9 +43,14 @@
             <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.github.pagehelper</groupId>
-            <artifactId>pagehelper-spring-boot-starter</artifactId>
-            <version>1.2.10</version>
+            <groupId>org.apache.dubbo</groupId>
+            <artifactId>dubbo</artifactId>
+            <version>3.2.0</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.dubbo.extensions</groupId>
+            <artifactId>dubbo-serialization-kryo</artifactId>
+            <version>3.2.0</version> <!-- 请根据实际情况选择合适的版本号 -->
         </dependency>
     </dependencies>
 
@@ -134,21 +75,34 @@
                 <artifactId>smart-doc-maven-plugin</artifactId>
                 <version>2.6.3</version>
                 <configuration>
+                    <!--指定生成文档的使用的配置文件,配置文件放在自己的项目中-->
                     <configFile>./src/main/resources/smart-doc.json</configFile>
-                    <projectName>测试</projectName>
+                    <!--指定项目名称-->
+                    <projectName>营销管家</projectName>
+                    <!--smart-doc实现自动分析依赖树加载第三方依赖的源码，如果一些框架依赖库加载不到导致报错，这时请使用excludes排除掉-->
                     <excludes>
+                        <!--格式为：groupId:artifactId;参考如下-->
+                        <!--也可以支持正则式如：com.alibaba:.* -->
                         <exclude>com.alibaba:fastjson</exclude>
                     </excludes>
+                    <!--includes配置用于配置加载外部依赖源码,配置后插件会按照配置项加载外部源代码而不是自动加载所有，因此使用时需要注意-->
+                    <!--smart-doc能自动分析依赖树加载所有依赖源码，原则上会影响文档构建效率，因此你可以使用includes来让插件加载你配置的组件-->
                     <includes>
+                        <!-- 使用了mybatis-plus的Page分页需要include所使用的源码包 -->
                         <include>com.baomidou:mybatis-plus-extension</include>
+                        <!-- 使用了mybatis-plus的IPage分页需要include mybatis-plus-core-->
                         <include>com.baomidou:mybatis-plus-core</include>
+                        <!-- 如果配置了includes的情况下， 使用了jpa的分页需要include所使用的源码包 -->
                         <include>org.springframework.data:spring-data-commons</include>
                         <include>com.keeson:.*</include>
                     </includes>
                 </configuration>
                 <executions>
                     <execution>
+                        <!--如果不需要在执行编译时启动smart-doc，则将phase注释掉-->
+                        <phase>compile</phase>
                         <goals>
+                            <!--smart-doc提供了html、openapi、markdown等goal，可按需配置-->
                             <goal>html</goal>
                         </goals>
                     </execution>
@@ -156,4 +110,5 @@
             </plugin>
         </plugins>
     </build>
+
 </project>

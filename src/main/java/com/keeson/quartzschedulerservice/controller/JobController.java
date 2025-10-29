@@ -3,7 +3,7 @@ package com.keeson.quartzschedulerservice.controller;
 import cn.hutool.core.lang.Dict;
 import cn.hutool.core.util.ObjectUtil;
 import cn.hutool.core.util.StrUtil;
-import com.github.pagehelper.PageInfo;
+import com.keeson.common.domain.response.PageResponse;
 import com.keeson.quartzschedulerservice.controller.common.ApiResponse;
 import com.keeson.quartzschedulerservice.domain.entity.domain.JobAndTrigger;
 import com.keeson.quartzschedulerservice.domain.entity.form.JobDubboForm;
@@ -123,15 +123,15 @@ public class JobController {
     }
 
     @GetMapping
-    public ResponseEntity<ApiResponse> jobList(Integer currentPage, Integer pageSize) {
+    public ResponseEntity<ApiResponse> jobList(Integer currentPage, Integer pageSize, String jobName, String jobGroup) {
         if (ObjectUtil.isNull(currentPage)) {
             currentPage = 1;
         }
         if (ObjectUtil.isNull(pageSize)) {
             pageSize = 10;
         }
-        PageInfo<JobAndTrigger> all = jobService.list(currentPage, pageSize);
-        return ResponseEntity.ok(ApiResponse.ok(Dict.create().set("total", all.getTotal()).set("data", all.getList())));
+        PageResponse<JobAndTrigger> pageResponse = jobService.list(currentPage, pageSize, jobName, jobGroup);
+        return ResponseEntity.ok(ApiResponse.ok(Dict.create().set("total", pageResponse.getTotal()).set("data", pageResponse.getList())));
     }
 
 }

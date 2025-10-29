@@ -1,7 +1,7 @@
 package com.keeson.quartzschedulerservice.domain.service;
 
 
-import com.github.pagehelper.PageInfo;
+import com.keeson.common.domain.response.PageResponse;
 import com.keeson.quartzschedulerservice.domain.entity.domain.JobAndTrigger;
 import com.keeson.quartzschedulerservice.domain.entity.form.JobDubboForm;
 import com.keeson.quartzschedulerservice.domain.entity.form.JobForm;
@@ -71,5 +71,5 @@ public interface JobService {
      * @param pageSize    每页条数
      * @return 定时任务列表
      */
-    PageInfo<JobAndTrigger> list(Integer currentPage, Integer pageSize);
+    PageResponse<JobAndTrigger> list(Integer currentPage, Integer pageSize, String jobName, String jobGroup);
 }

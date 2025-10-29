@@ -1,21 +1,19 @@
 package com.keeson.quartzschedulerservice.domain.service.impl;
 
 import com.alibaba.fastjson.JSONObject;
-import com.github.pagehelper.PageHelper;
-import com.github.pagehelper.PageInfo;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.keeson.common.domain.response.PageResponse;
 import com.keeson.quartzschedulerservice.domain.entity.domain.JobAndTrigger;
 import com.keeson.quartzschedulerservice.domain.entity.form.JobDubboForm;
 import com.keeson.quartzschedulerservice.domain.entity.form.JobForm;
-import com.keeson.quartzschedulerservice.domain.job.DubboJob;
+import com.keeson.quartzschedulerservice.domain.repository.JobRepository;
 import com.keeson.quartzschedulerservice.domain.service.JobService;
-import com.keeson.quartzschedulerservice.infrastructure.data.mybatis.JobMapper;
+import com.keeson.quartzschedulerservice.infrastructure.job.DubboJob;
 import com.keeson.quartzschedulerservice.infrastructure.util.JobUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 /**
  * @Author Yhy
@@ -26,12 +24,12 @@ import java.util.List;
 @Slf4j
 public class JobServiceImpl implements JobService {
     private final Scheduler scheduler;
-    private final JobMapper jobMapper;
+    private final JobRepository jobRepository;
 
     @Autowired
-    public JobServiceImpl(Scheduler scheduler, JobMapper jobMapper) {
+    public JobServiceImpl(Scheduler scheduler, JobRepository jobRepository) {
         this.scheduler = scheduler;
-        this.jobMapper = jobMapper;
+        this.jobRepository = jobRepository;
     }
 
     /**
@@ -160,9 +158,8 @@ public class JobServiceImpl implements JobService {
      * @return
      */
     @Override
-    public PageInfo<JobAndTrigger> list(Integer currentPage, Integer pageSize) {
-        PageHelper.startPage(currentPage, pageSize);
-        List<JobAndTrigger> list = jobMapper.list();
-        return new PageInfo<>(list);
+    public PageResponse<JobAndTrigger> list(Integer currentPage, Integer pageSize, String jobName, String jobGroup) {
+        IPage<JobAndTrigger> jobAndTriggerIPage = jobRepository.findAllJobs(currentPage, pageSize, jobName, jobGroup);
+        return new PageResponse<>(jobAndTriggerIPage.getRecords(), jobAndTriggerIPage.getTotal());
     }
 }

@@ -1,7 +1,7 @@
 package com.keeson.quartzschedulerservice.infrastructure.util;
 
 
-import com.keeson.quartzschedulerservice.domain.job.base.BaseJob;
+import com.keeson.quartzschedulerservice.infrastructure.job.base.BaseJob;
 
 /**
  * <p>

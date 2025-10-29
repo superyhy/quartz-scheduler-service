@@ -1,7 +1,7 @@
-package com.keeson.quartzschedulerservice.domain.job;
+package com.keeson.quartzschedulerservice.infrastructure.job;
 
 import cn.hutool.core.date.DateUtil;
-import com.keeson.quartzschedulerservice.domain.job.base.BaseJob;
+import com.keeson.quartzschedulerservice.infrastructure.job.base.BaseJob;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.JobExecutionContext;
 

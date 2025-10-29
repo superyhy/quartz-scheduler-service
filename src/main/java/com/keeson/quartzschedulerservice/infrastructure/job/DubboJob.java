@@ -1,4 +1,4 @@
-package com.keeson.quartzschedulerservice.domain.job;
+package com.keeson.quartzschedulerservice.infrastructure.job;
 
 import com.alibaba.fastjson.JSONArray;
 import lombok.extern.slf4j.Slf4j;

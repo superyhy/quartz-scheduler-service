@@ -27,7 +27,9 @@
     <br/>
     <div>
         <el-table ref="jobTable" :data="tableData" style="width:100%" border center>
-            <el-table-column prop="jobName" label="任务名称" show-overflow-tooltip align="center"></el-table-column>
+            <el-table-column prop="jobDescription" label="任务描述" show-overflow-tooltip
+                             align="center"></el-table-column>
+            <el-table-column prop="jobName" label="任务名称" align="center"></el-table-column>
             <el-table-column prop="jobGroup" label="任务所在组" sortable align="center"></el-table-column>
             <el-table-column prop="jobClassName" label="任务类名" align="center"></el-table-column>
             <el-table-column prop="triggerName" label="触发器名称" align="center"></el-table-column>

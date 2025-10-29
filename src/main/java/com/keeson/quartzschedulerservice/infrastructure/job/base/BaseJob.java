@@ -1,4 +1,4 @@
-package com.keeson.quartzschedulerservice.domain.job.base;
+package com.keeson.quartzschedulerservice.infrastructure.job.base;
 
 import org.quartz.*;
 

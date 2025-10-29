@@ -15,6 +15,10 @@ import java.math.BigInteger;
 @Data
 public class JobAndTrigger {
     /**
+     * 定时任务描述
+     */
+    private String jobDescription;
+    /**
      * 定时任务名称
      */
     private String jobName;
