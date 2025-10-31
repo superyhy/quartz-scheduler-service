@@ -40,6 +40,7 @@ public class JobController {
     /**
      * 保存定时任务
      */
+    @Deprecated
     @PostMapping
     public ResponseEntity<ApiResponse> addJob(@Valid JobForm form) {
         try {
@@ -73,12 +74,12 @@ public class JobController {
      * 删除定时任务
      */
     @DeleteMapping
-    public ResponseEntity<ApiResponse> deleteJob(@RequestBody @Valid JobForm form) throws SchedulerException {
-        if (StrUtil.hasBlank(form.getJobGroupName(), form.getJobClassName())) {
+    public ResponseEntity<ApiResponse> deleteJob(@RequestParam String jobGroupName, @RequestParam String jobClassName) throws SchedulerException {
+        if (StrUtil.hasBlank(jobGroupName, jobClassName)) {
             return new ResponseEntity<>(ApiResponse.msg("参数不能为空"), HttpStatus.BAD_REQUEST);
         }
 
-        jobService.deleteJob(form);
+        jobService.deleteJob(new JobForm(null, null, jobClassName, jobGroupName, null));
         return new ResponseEntity<>(ApiResponse.msg("删除成功"), HttpStatus.OK);
     }
 

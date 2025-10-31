@@ -20,6 +20,16 @@ import javax.validation.constraints.NotBlank;
 @NoArgsConstructor
 public class JobForm {
     /**
+     * 定时任务描述
+     */
+    @NotBlank(message = "任务描述")
+    private String jobDescription;
+    /**
+     * 定时任务名称
+     */
+    @NotBlank(message = "任务名称")
+    private String jobName;
+    /**
      * 定时任务全类名
      */
     @NotBlank(message = "类名不能为空")

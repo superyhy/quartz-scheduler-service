@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html>
+
 <head>
     <meta charset="UTF-8">
     <title>spring-boot-demo-task-quartz</title>
@@ -7,22 +8,19 @@
     <script src="https://cdn.bootcss.com/vue/2.5.17/vue.min.js"></script>
     <script src="https://cdn.bootcss.com/vue-resource/1.5.1/vue-resource.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/element-ui/2.4.9/index.js"></script>
-
     <style>
         #top {
-            /*background: #20A0FF;*/
             padding: 5px;
-            /*overflow: hidden*/
         }
     </style>
-
 </head>
+
 <body>
 <div id="job">
     <div id="top">
         <el-button size="small" type="primary" plain @click="search" :loading="loading" icon="el-icon-search">查询
         </el-button>
-        <el-button size="small" type="primary" plain @click="handleadd" icon="el-icon-plus">添加</el-button>
+        <el-button size="small" type="primary" plain @click="handleAddDubbo" icon="el-icon-plus">添加RPC任务</el-button>
     </div>
     <br/>
     <div>
@@ -39,62 +37,69 @@
             <el-table-column prop="triggerState" label="状态" align="center" :formatter="formatState"></el-table-column>
             <el-table-column label="操作" width="300" align="center">
                 <template scope="scope">
-                    <el-button size="small" type="warning" @click="handlePause(scope.$index, scope.row)">
-                        暂停
+                    <el-button size="small" type="warning" @click="handlePause(scope.$index, scope.row)">暂停
                     </el-button>
-                    <el-button size="small" type="info" @click="handleResume(scope.$index, scope.row)">
-                        恢复
+                    <el-button size="small" type="info" @click="handleResume(scope.$index, scope.row)">恢复</el-button>
+                    <el-button size="small" type="danger" @click="handleDelete(scope.$index, scope.row)">删除
                     </el-button>
-                    <el-button size="small" type="danger" @click="handleDelete(scope.$index, scope.row)">
-                        删除
-                    </el-button>
-                    <el-button size="small" type="success" @click="handleUpdate(scope.$index, scope.row)">
-                        修改
+                    <el-button size="small" type="success" @click="handleUpdate(scope.$index, scope.row)">修改
                     </el-button>
                 </template>
             </el-table-column>
         </el-table>
 
         <div align="center">
-            <el-pagination
-                    @size-change="handleSizeChange"
-                    @current-change="handleCurrentChange"
-                    :current-page="currentPage"
-                    :page-sizes="[10, 20, 30, 40]"
-                    :page-size="pagesize"
-                    layout="total, sizes, prev, pager, next, jumper"
-                    :total="totalCount">
+            <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange"
+                           :current-page="currentPage" :page-sizes="[10, 20, 30, 40]" :page-size="pagesize"
+                           layout="total, sizes, prev, pager, next, jumper" :total="totalCount">
             </el-pagination>
         </div>
     </div>
 
-    <el-dialog title="添加任务" :visible.sync="dialogFormVisible">
-        <el-form :model="form">
-            <el-form-item label="任务名称" label-width="100px" style="width:90%">
-                <el-input v-model="form.jobName" auto-complete="off"></el-input>
-            </el-form-item>
-            <el-form-item label="任务分组" label-width="100px" style="width:90%">
-                <el-input v-model="form.jobGroup" auto-complete="off"></el-input>
-            </el-form-item>
-            <el-form-item label="表达式" label-width="100px" style="width:90%">
-                <el-input v-model="form.cronExpression" auto-complete="off"></el-input>
-            </el-form-item>
-        </el-form>
-        <div slot="footer" class="dialog-footer">
-            <el-button @click="dialogFormVisible = false">取 消</el-button>
-            <el-button type="primary" @click="add">确 定</el-button>
-        </div>
-    </el-dialog>
-
+    <!-- 修改任务对话框 -->
     <el-dialog title="修改任务" :visible.sync="updateFormVisible">
-        <el-form :model="updateform">
-            <el-form-item label="表达式" label-width="100px" style="width:90%">
-                <el-input v-model="updateform.cronExpression" auto-complete="off"></el-input>
+        <el-form :model="updateform" ref="updateForm" label-width="100px">
+            <el-form-item label="任务描述" prop="jobDescription" style="width:90%">
+                <el-input v-model="updateform.jobDescription" placeholder="请输入任务描述"></el-input>
+            </el-form-item>
+            <el-form-item label="表达式" prop="cronExpression" style="width:90%">
+                <el-input v-model="updateform.cronExpression" placeholder="请输入Cron表达式"></el-input>
             </el-form-item>
         </el-form>
         <div slot="footer" class="dialog-footer">
             <el-button @click="updateFormVisible = false">取 消</el-button>
             <el-button type="primary" @click="update">确 定</el-button>
+        </div>
+    </el-dialog>
+
+    <!-- 添加RPC任务对话框 -->
+    <el-dialog title="添加RPC任务" :visible.sync="dubboDialogVisible" width="600px">
+        <el-form :model="dubboForm" label-width="120px">
+            <el-form-item label="任务描述">
+                <el-input v-model="dubboForm.jobDescribe"></el-input>
+            </el-form-item>
+            <el-form-item label="任务组名">
+                <el-input v-model="dubboForm.jobGroupName"></el-input>
+            </el-form-item>
+            <el-form-item label="Cron表达式">
+                <el-input v-model="dubboForm.cronExpression"></el-input>
+            </el-form-item>
+            <el-form-item label="接口名">
+                <el-input v-model="dubboForm.interfaceName"></el-input>
+            </el-form-item>
+            <el-form-item label="方法名">
+                <el-input v-model="dubboForm.methodName"></el-input>
+            </el-form-item>
+            <el-form-item label="参数类型">
+                <el-input v-model="dubboForm.paramTypes" placeholder="用逗号分隔，如 java.lang.String,int"></el-input>
+            </el-form-item>
+            <el-form-item label="参数值">
+                <el-input v-model="dubboForm.paramValues" placeholder="用逗号分隔"></el-input>
+            </el-form-item>
+        </el-form>
+        <div slot="footer" class="dialog-footer">
+            <el-button @click="dubboDialogVisible = false">取 消</el-button>
+            <el-button type="primary" @click="addDubbo">确 定</el-button>
         </div>
     </el-dialog>
 </div>
@@ -107,153 +112,152 @@
     var vue = new Vue({
         el: "#job",
         data: {
-            //表格当前页数据
             tableData: [],
-            //请求的URL
             url: 'job',
-            //默认每页数据量
             pagesize: 10,
-            //当前页码
             currentPage: 1,
-            //查询的页码
-            start: 1,
-            //默认数据总数
             totalCount: 1000,
-            //添加对话框默认可见性
-            dialogFormVisible: false,
-            //修改对话框默认可见性
             updateFormVisible: false,
-            //提交的表单
-            form: {
-                jobName: '',
-                jobGroup: '',
-                cronExpression: ''
-            },
+            dubboDialogVisible: false,
+            loading: false,
             updateform: {
                 jobName: '',
                 jobGroup: '',
-                cronExpression: ''
+                cronExpression: '',
+                jobDescription: ''
             },
-            loading: false
+            dubboForm: {
+                jobDescribe: '',
+                jobGroupName: '',
+                cronExpression: '',
+                interfaceName: '',
+                methodName: '',
+                paramTypes: '',
+                paramValues: ''
+            }
         },
         methods: {
-            // 格式化状态
-            formatState: function (row, column, cellValue, index) {
-                if (row.triggerState === 'WAITING' || row.triggerState === 'ACQUIRED') {
-                    return "运行中";
-                } else if (row.triggerState === 'PAUSED') {
-                    return "暂停";
-                } else {
-                    return "未知状态";
-                }
+            formatState: function (row) {
+                if (row.triggerState === 'WAITING' || row.triggerState === 'ACQUIRED') return "运行中";
+                if (row.triggerState === 'PAUSED') return "暂停";
+                return "未知状态";
             },
-            // 从服务器读取数据
             loadData: function (currentPage, pageSize) {
                 this.loading = true;
-                this.$http.get('job?' + 'currentPage=' + currentPage + '&pageSize=' + pageSize).then(function (res) {
-                    console.log(res);
+                this.$http.get('job?' + 'currentPage=' + currentPage + '&pageSize=' + pageSize).then(res => {
                     this.tableData = res.body.data.data;
                     this.totalCount = res.body.data.total;
                     this.loading = false;
-                }, function () {
+                }, () => {
                     console.log('failed');
+                    this.loading = false;
                 });
             },
-            // 删除任务
             handleDelete: function (index, row) {
                 this.$http.delete('job', {
                     params: {
-                        "jobClassName": row.jobName,
-                        "jobGroupName": row.jobGroup
+                        jobClassName: row.jobName,
+                        jobGroupName: row.jobGroup
                     }
-                }, {emulateJSON: true}).then(function (res) {
-                    this.loadData(this.currentPage, this.pagesize);
-                }, function () {
-                    console.log('failed');
-                });
+                }, {emulateJSON: true})
+                    .then(res => {
+                        this.loadData(this.currentPage, this.pagesize);
+                    }, () => console.log('failed'));
             },
-            // 暂停任务
             handlePause: function (index, row) {
                 this.$http.put('job?pause', {
-                    "jobClassName": row.jobName,
-                    "jobGroupName": row.jobGroup
-                }, {emulateJSON: true}).then(function (res) {
-                    this.loadData(this.currentPage, this.pagesize);
-                }, function () {
-                    console.log('failed');
-                });
+                    jobClassName: row.jobName,
+                    jobGroupName: row.jobGroup
+                }, {emulateJSON: true})
+                    .then(res => {
+                        this.loadData(this.currentPage, this.pagesize);
+                    }, () => console.log('failed'));
             },
-            // 恢复任务
             handleResume: function (index, row) {
                 this.$http.put('job?resume', {
-                    "jobClassName": row.jobName,
-                    "jobGroupName": row.jobGroup
-                }, {emulateJSON: true}).then(function (res) {
-                    this.loadData(this.currentPage, this.pagesize);
-                }, function () {
-                    console.log('failed');
-                });
+                    jobClassName: row.jobName,
+                    jobGroupName: row.jobGroup
+                }, {emulateJSON: true})
+                    .then(res => {
+                        this.loadData(this.currentPage, this.pagesize);
+                    }, () => console.log('failed'));
             },
-            // 搜索
             search: function () {
                 this.loadData(this.currentPage, this.pagesize);
             },
-            // 弹出对话框
-            handleadd: function () {
-                this.dialogFormVisible = true;
-            },
-            // 添加
-            add: function () {
-                this.$http.post('job', {
-                    "jobClassName": this.form.jobName,
-                    "jobGroupName": this.form.jobGroup,
-                    "cronExpression": this.form.cronExpression
-                }, {emulateJSON: true}).then(function (res) {
-                    this.loadData(this.currentPage, this.pagesize);
-                    this.dialogFormVisible = false;
-                }, function () {
-                    console.log('failed');
-                });
-            },
-            // 更新
             handleUpdate: function (index, row) {
-                console.log(row);
                 this.updateFormVisible = true;
                 this.updateform.jobName = row.jobName;
                 this.updateform.jobGroup = row.jobGroup;
+                this.updateform.jobDescription = row.jobDescription;
+                this.updateform.cronExpression = row.cronExpression;
             },
-            // 更新任务
             update: function () {
-                this.$http.put('job?cron',
-                    {
-                        "jobClassName": this.updateform.jobName,
-                        "jobGroupName": this.updateform.jobGroup,
-                        "cronExpression": this.updateform.cronExpression
-                    }, {emulateJSON: true}
-                ).then(function (res) {
-                    this.loadData(this.currentPage, this.pagesize);
-                    this.updateFormVisible = false;
-                }, function () {
-                    console.log('failed');
-                });
-
+                this.$http.put('job?cron', {
+                    jobClassName: this.updateform.jobName,
+                    jobGroupName: this.updateform.jobGroup,
+                    cronExpression: this.updateform.cronExpression
+                }, {emulateJSON: true})
+                    .then(res => {
+                        this.loadData(this.currentPage, this.pagesize);
+                        this.updateFormVisible = false;
+                    }, () => console.log('failed'));
             },
-            // 每页显示数据量变更
             handleSizeChange: function (val) {
                 this.pagesize = val;
                 this.loadData(this.currentPage, this.pagesize);
             },
-            // 页码变更
             handleCurrentChange: function (val) {
                 this.currentPage = val;
                 this.loadData(this.currentPage, this.pagesize);
+            },
+            handleAddDubbo: function () {
+                this.dubboDialogVisible = true;
+                this.dubboForm = {
+                    jobDescribe: '',
+                    jobGroupName: '',
+                    cronExpression: '',
+                    interfaceName: '',
+                    methodName: '',
+                    paramTypes: '',
+                    paramValues: ''
+                };
+            },
+            addDubbo: function () {
+                let paramTypesArr = this.dubboForm.paramTypes ? this.dubboForm.paramTypes.split(',') : [];
+                let paramValuesArr = this.dubboForm.paramValues ? this.dubboForm.paramValues.split(',') : [];
+                this.$http.post('/job/add_dubbo', {
+                    jobDescribe: this.dubboForm.jobDescribe,
+                    jobGroupName: this.dubboForm.jobGroupName,
+                    cronExpression: this.dubboForm.cronExpression,
+                    interfaceName: this.dubboForm.interfaceName,
+                    methodName: this.dubboForm.methodName,
+                    paramTypes: paramTypesArr,
+                    paramValues: paramValuesArr
+                }, {
+                    headers: {
+                        'Content-Type': 'application/json'
+                    }
+                }).then(res => {
+                    const data = res.body;
+                    if (data && data.code === 200) {
+                        this.$message.success('RPC任务添加成功');
+                        this.dubboDialogVisible = false;
+                        this.loadData(this.currentPage, this.pagesize);
+                    } else {
+                        this.$message.error(data && data.msg ? data.msg : 'RPC任务添加失败');
+                    }
+                }, err => {
+                    console.error(err);
+                    this.$message.error('RPC任务添加失败');
+                });
             }
         }
     });
 
-    //载入数据
+    // 载入数据
     vue.loadData(vue.currentPage, vue.pagesize);
 </script>
-
 </body>
+
 </html>
