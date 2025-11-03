@@ -18,6 +18,13 @@ import java.util.Map;
 @RequestMapping("/api")
 public class LoginController {
 
+    /**
+     * 登录
+     *
+     * @param loginMap
+     * @param session
+     * @return
+     */
     @PostMapping("/login")
     public Map<String, Object> login(@RequestBody Map<String, String> loginMap, HttpSession session) {
         String username = loginMap.get("username");
@@ -31,6 +38,21 @@ public class LoginController {
         } else {
             result.put("success", false);
         }
+        return result;
+    }
+
+    /**
+     * 退出
+     *
+     * @param session
+     * @return
+     */
+    @PostMapping("/logout")
+    public Map<String, Object> logout(HttpSession session) {
+        Map<String, Object> result = new HashMap<>();
+        // 清空 session
+        session.invalidate();
+        result.put("success", true);
         return result;
     }
 }

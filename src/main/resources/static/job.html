@@ -3,7 +3,7 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>Quartz 定时任务管理</title>
+    <title>定时任务调度管理</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/element-ui/2.4.9/theme-chalk/index.css" rel="stylesheet">
     <script src="https://cdn.bootcss.com/vue/2.5.17/vue.min.js"></script>
     <script src="https://cdn.bootcss.com/vue-resource/1.5.1/vue-resource.min.js"></script>
@@ -11,6 +11,10 @@
     <style>
         #top {
             padding: 10px;
+        }
+
+        #logout-btn {
+            float: right;
         }
     </style>
 </head>
@@ -27,6 +31,7 @@
                    icon="el-icon-search">查询
         </el-button>
         <el-button size="small" type="primary" plain @click="handleAddDubbo" icon="el-icon-plus">添加RPC任务</el-button>
+        <el-button id="logout-btn" size="small" type="danger" plain @click="logout">退出登录</el-button>
     </div>
     <br/>
     <!-- 任务表格 -->
@@ -235,7 +240,7 @@
             },
             update() {
                 this.$refs.updateForm.validate(valid => {
-                    if (!valid) return; // 校验不通过阻止提交
+                    if (!valid) return;
                     const {interfaceName, methodName} = this.parseJobName(this.updateform.jobName);
                     const params = new URLSearchParams();
                     params.append('jobDescription', this.updateform.jobDescription);
@@ -268,7 +273,7 @@
             },
             addDubbo() {
                 this.$refs.dubboForm.validate(valid => {
-                    if (!valid) return; // 校验不通过阻止提交
+                    if (!valid) return;
                     let paramTypesArr = this.dubboForm.paramTypes ? this.dubboForm.paramTypes.split(',') : [];
                     let paramValuesArr = this.dubboForm.paramValues ? this.dubboForm.paramValues.split(',') : [];
                     this.$http.post(`${this.url}/add`, {
@@ -301,6 +306,19 @@
             search() {
                 this.currentPage = 1;
                 this.loadData(this.currentPage, this.pagesize);
+            },
+            logout() {
+                this.$http.post('/api/logout').then(res => {
+                    if (res.body.success) {
+                        this.$message.success('退出成功');
+                        window.location.href = '/login.html'; // 跳转登录页
+                    } else {
+                        this.$message.error('退出失败');
+                    }
+                }, err => {
+                    console.error(err);
+                    this.$message.error('退出失败');
+                });
             }
         },
         mounted() {
