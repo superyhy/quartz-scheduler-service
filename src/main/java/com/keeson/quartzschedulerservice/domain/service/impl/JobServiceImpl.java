@@ -5,11 +5,9 @@ import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.keeson.common.domain.response.PageResponse;
 import com.keeson.quartzschedulerservice.domain.entity.domain.JobAndTrigger;
 import com.keeson.quartzschedulerservice.domain.entity.form.JobDubboForm;
-import com.keeson.quartzschedulerservice.domain.entity.form.JobForm;
 import com.keeson.quartzschedulerservice.domain.repository.JobRepository;
 import com.keeson.quartzschedulerservice.domain.service.JobService;
 import com.keeson.quartzschedulerservice.infrastructure.job.DubboJob;
-import com.keeson.quartzschedulerservice.infrastructure.util.JobUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.*;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,33 +31,11 @@ public class JobServiceImpl implements JobService {
     }
 
     /**
-     * 添加并启动定时任务
+     * 添加Dubbo RPC任务
      *
-     * @param form 表单参数 {@link JobForm}
+     * @param jobDubboForm 表单参数 {@link JobDubboForm}
      * @throws Exception
      */
-    @Override
-    public void addJob(JobForm form) throws Exception {
-        // 启动调度器
-        scheduler.start();
-
-        // 构建Job信息
-        JobDetail jobDetail = JobBuilder.newJob(JobUtil.getClass(form.getJobClassName()).getClass()).withIdentity(form.getJobClassName(), form.getJobGroupName()).build();
-
-        // Cron表达式调度构建器(即任务执行的时间)
-        CronScheduleBuilder cron = CronScheduleBuilder.cronSchedule(form.getCronExpression());
-
-        //根据Cron表达式构建一个Trigger
-        CronTrigger trigger = TriggerBuilder.newTrigger().withIdentity(form.getJobClassName(), form.getJobGroupName()).withSchedule(cron).build();
-
-        try {
-            scheduler.scheduleJob(jobDetail, trigger);
-        } catch (SchedulerException e) {
-            log.error("【定时任务】创建失败！", e);
-            throw new Exception("【定时任务】创建失败！");
-        }
-    }
-
     @Override
     public void addDubboJob(JobDubboForm jobDubboForm) throws Exception {
         // 启动调度器
@@ -89,66 +65,78 @@ public class JobServiceImpl implements JobService {
         }
     }
 
-    /**
-     * 删除定时任务
-     *
-     * @param form 表单参数 {@link JobForm}
-     * @throws SchedulerException
-     */
     @Override
-    public void deleteJob(JobForm form) throws SchedulerException {
-        scheduler.pauseTrigger(TriggerKey.triggerKey(form.getJobClassName(), form.getJobGroupName()));
-        scheduler.unscheduleJob(TriggerKey.triggerKey(form.getJobClassName(), form.getJobGroupName()));
-        scheduler.deleteJob(JobKey.jobKey(form.getJobClassName(), form.getJobGroupName()));
-    }
+    public void deleteJob(JobDubboForm form) throws SchedulerException {
+        String jobName = form.getInterfaceName() + ":" + form.getMethodName();
+        JobKey jobKey = JobKey.jobKey(jobName, form.getJobGroupName());
+        TriggerKey triggerKey = TriggerKey.triggerKey(jobName, form.getJobGroupName());
 
-    /**
-     * 暂停定时任务
-     *
-     * @param form 表单参数 {@link JobForm}
-     * @throws SchedulerException
-     */
-    @Override
-    public void pauseJob(JobForm form) throws SchedulerException {
-        scheduler.pauseJob(JobKey.jobKey(form.getJobClassName(), form.getJobGroupName()));
-    }
-
-    /**
-     * 恢复定时任务
-     *
-     * @param form 表单参数 {@link JobForm}
-     * @throws SchedulerException
-     */
-    @Override
-    public void resumeJob(JobForm form) throws SchedulerException {
-        scheduler.resumeJob(JobKey.jobKey(form.getJobClassName(), form.getJobGroupName()));
-    }
-
-    /**
-     * 重新配置定时任务
-     *
-     * @param form 表单参数 {@link JobForm}
-     * @throws Exception
-     */
-    @Override
-    public void cronJob(JobForm form) throws Exception {
-        try {
-            TriggerKey triggerKey = TriggerKey.triggerKey(form.getJobClassName(), form.getJobGroupName());
-            // 表达式调度构建器
-            CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(form.getCronExpression());
-
-            CronTrigger trigger = (CronTrigger) scheduler.getTrigger(triggerKey);
-
-            // 根据Cron表达式构建一个Trigger
-            trigger = trigger.getTriggerBuilder().withIdentity(triggerKey).withSchedule(scheduleBuilder).build();
-
-            // 按新的trigger重新设置job执行
-            scheduler.rescheduleJob(triggerKey, trigger);
-        } catch (SchedulerException e) {
-            log.error("【定时任务】更新失败！", e);
-            throw new Exception("【定时任务】创建失败！");
+        if (scheduler.checkExists(jobKey)) {
+            scheduler.pauseTrigger(triggerKey);
+            scheduler.unscheduleJob(triggerKey);
+            scheduler.deleteJob(jobKey);
         }
     }
+
+    @Override
+    public void pauseJob(JobDubboForm form) throws SchedulerException {
+        String jobName = form.getInterfaceName() + ":" + form.getMethodName();
+        JobKey jobKey = JobKey.jobKey(jobName, form.getJobGroupName());
+        if (scheduler.checkExists(jobKey)) scheduler.pauseJob(jobKey);
+    }
+
+    @Override
+    public void resumeJob(JobDubboForm form) throws SchedulerException {
+        String jobName = form.getInterfaceName() + ":" + form.getMethodName();
+        JobKey jobKey = JobKey.jobKey(jobName, form.getJobGroupName());
+        if (scheduler.checkExists(jobKey)) scheduler.resumeJob(jobKey);
+    }
+
+    @Override
+    public void cronJob(JobDubboForm form) throws Exception {
+        String jobName = form.getInterfaceName() + ":" + form.getMethodName();
+        TriggerKey triggerKey = TriggerKey.triggerKey(jobName, form.getJobGroupName());
+        JobKey jobKey = JobKey.jobKey(jobName, form.getJobGroupName());
+
+        // 检查任务是否存在
+        if (!scheduler.checkExists(triggerKey)) {
+            throw new Exception("任务不存在");
+        }
+
+        // 获取旧触发器
+        Trigger oldTrigger = scheduler.getTrigger(triggerKey);
+        if (oldTrigger == null) {
+            throw new Exception("触发器不存在");
+        }
+
+        // 获取旧的 JobDetail
+        JobDetail oldJobDetail = scheduler.getJobDetail(jobKey);
+        if (oldJobDetail == null) {
+            throw new Exception("任务详情不存在");
+        }
+
+        // ---------- 1️⃣ 修改 JobDetail 的描述信息 ----------
+        JobBuilder jobBuilder = oldJobDetail.getJobBuilder();
+        JobDetail newJobDetail = jobBuilder
+                .withDescription(form.getJobDescribe()) // 更新描述
+                .build();
+
+        // ---------- 2️⃣ 修改 Trigger 的 Cron 表达式 ----------
+        CronScheduleBuilder scheduleBuilder = CronScheduleBuilder.cronSchedule(form.getCronExpression());
+        CronTrigger newTrigger = TriggerBuilder.newTrigger()
+                .withIdentity(triggerKey)
+                .withSchedule(scheduleBuilder)
+                .forJob(newJobDetail)
+                .build();
+
+        // ---------- 3️⃣ 更新任务 ----------
+        // 先删除旧任务（避免 JobDetail 不更新的问题）
+        scheduler.deleteJob(jobKey);
+
+        // 重新添加新 JobDetail + 新 Trigger
+        scheduler.scheduleJob(newJobDetail, newTrigger);
+    }
+
 
     /**
      * 查询定时任务列表

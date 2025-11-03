@@ -1,13 +1,10 @@
 package com.keeson.quartzschedulerservice.controller;
 
 import cn.hutool.core.lang.Dict;
-import cn.hutool.core.util.ObjectUtil;
-import cn.hutool.core.util.StrUtil;
 import com.keeson.common.domain.response.PageResponse;
 import com.keeson.quartzschedulerservice.controller.common.ApiResponse;
 import com.keeson.quartzschedulerservice.domain.entity.domain.JobAndTrigger;
 import com.keeson.quartzschedulerservice.domain.entity.form.JobDubboForm;
-import com.keeson.quartzschedulerservice.domain.entity.form.JobForm;
 import com.keeson.quartzschedulerservice.domain.service.JobService;
 import lombok.extern.slf4j.Slf4j;
 import org.quartz.SchedulerException;
@@ -37,102 +34,86 @@ public class JobController {
         this.jobService = jobService;
     }
 
-    /**
-     * 保存定时任务
-     */
-    @Deprecated
-    @PostMapping
-    public ResponseEntity<ApiResponse> addJob(@Valid JobForm form) {
-        try {
-            jobService.addJob(form);
-        } catch (Exception e) {
-            log.error("+++++", e);
-            return new ResponseEntity<>(ApiResponse.msg(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
-        }
-
-        return new ResponseEntity<>(ApiResponse.msg("操作成功"), HttpStatus.CREATED);
-    }
-
-    /**
-     * 保存dubbo定时任务
-     *
-     * @param form
-     * @return
-     */
-    @PostMapping("/add_dubbo")
-    public ResponseEntity<ApiResponse> addDubboJob(@RequestBody @Valid JobDubboForm form) {
+    @PostMapping("/add")
+    public ResponseEntity<ApiResponse> add(@RequestBody @Valid JobDubboForm form) {
         try {
             jobService.addDubboJob(form);
+            return new ResponseEntity<>(ApiResponse.msg("任务创建成功"), HttpStatus.CREATED);
         } catch (Exception e) {
-            log.error("+++++", e);
-            return new ResponseEntity<>(ApiResponse.msg(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(ApiResponse.msg("创建失败: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-        return new ResponseEntity<>(ApiResponse.msg("操作成功"), HttpStatus.CREATED);
     }
 
-    /**
-     * 删除定时任务
-     */
-    @DeleteMapping
-    public ResponseEntity<ApiResponse> deleteJob(@RequestParam String jobGroupName, @RequestParam String jobClassName) throws SchedulerException {
-        if (StrUtil.hasBlank(jobGroupName, jobClassName)) {
-            return new ResponseEntity<>(ApiResponse.msg("参数不能为空"), HttpStatus.BAD_REQUEST);
+    @DeleteMapping("/delete")
+    public ResponseEntity<ApiResponse> delete(@RequestParam String interfaceName,
+                                              @RequestParam String methodName,
+                                              @RequestParam String jobGroupName) {
+        try {
+            JobDubboForm form = new JobDubboForm();
+            form.setInterfaceName(interfaceName);
+            form.setMethodName(methodName);
+            form.setJobGroupName(jobGroupName);
+            jobService.deleteJob(form);
+            return ResponseEntity.ok(ApiResponse.msg("任务删除成功"));
+        } catch (SchedulerException e) {
+            return new ResponseEntity<>(ApiResponse.msg("删除失败: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        jobService.deleteJob(new JobForm(null, null, jobClassName, jobGroupName, null));
-        return new ResponseEntity<>(ApiResponse.msg("删除成功"), HttpStatus.OK);
     }
 
-    /**
-     * 暂停定时任务
-     */
-    @PutMapping(params = "pause")
-    public ResponseEntity<ApiResponse> pauseJob(JobForm form) throws SchedulerException {
-        if (StrUtil.hasBlank(form.getJobGroupName(), form.getJobClassName())) {
-            return new ResponseEntity<>(ApiResponse.msg("参数不能为空"), HttpStatus.BAD_REQUEST);
+    @PutMapping("/pause")
+    public ResponseEntity<ApiResponse> pause(@RequestParam String interfaceName,
+                                             @RequestParam String methodName,
+                                             @RequestParam String jobGroupName) {
+        try {
+            JobDubboForm form = new JobDubboForm();
+            form.setInterfaceName(interfaceName);
+            form.setMethodName(methodName);
+            form.setJobGroupName(jobGroupName);
+            jobService.pauseJob(form);
+            return ResponseEntity.ok(ApiResponse.msg("任务已暂停"));
+        } catch (SchedulerException e) {
+            return new ResponseEntity<>(ApiResponse.msg("暂停失败: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        jobService.pauseJob(form);
-        return new ResponseEntity<>(ApiResponse.msg("暂停成功"), HttpStatus.OK);
     }
 
-    /**
-     * 恢复定时任务
-     */
-    @PutMapping(params = "resume")
-    public ResponseEntity<ApiResponse> resumeJob(JobForm form) throws SchedulerException {
-        if (StrUtil.hasBlank(form.getJobGroupName(), form.getJobClassName())) {
-            return new ResponseEntity<>(ApiResponse.msg("参数不能为空"), HttpStatus.BAD_REQUEST);
+    @PutMapping("/resume")
+    public ResponseEntity<ApiResponse> resume(@RequestParam String interfaceName,
+                                              @RequestParam String methodName,
+                                              @RequestParam String jobGroupName) {
+        try {
+            JobDubboForm form = new JobDubboForm();
+            form.setInterfaceName(interfaceName);
+            form.setMethodName(methodName);
+            form.setJobGroupName(jobGroupName);
+            jobService.resumeJob(form);
+            return ResponseEntity.ok(ApiResponse.msg("任务已恢复"));
+        } catch (SchedulerException e) {
+            return new ResponseEntity<>(ApiResponse.msg("恢复失败: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        jobService.resumeJob(form);
-        return new ResponseEntity<>(ApiResponse.msg("恢复成功"), HttpStatus.OK);
     }
 
-    /**
-     * 修改定时任务，定时时间
-     */
-    @PutMapping(params = "cron")
-    public ResponseEntity<ApiResponse> cronJob(@Valid JobForm form) {
+    @PutMapping("/update-cron")
+    public ResponseEntity<ApiResponse> updateCron(@RequestBody @Valid JobDubboForm form) {
         try {
             jobService.cronJob(form);
+            return ResponseEntity.ok(ApiResponse.msg("Cron表达式修改成功"));
         } catch (Exception e) {
-            return new ResponseEntity<>(ApiResponse.msg(e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
+            return new ResponseEntity<>(ApiResponse.msg("修改失败: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
-
-        return new ResponseEntity<>(ApiResponse.msg("修改成功"), HttpStatus.OK);
     }
 
-    @GetMapping
-    public ResponseEntity<ApiResponse> jobList(Integer currentPage, Integer pageSize, String jobName, String jobGroup) {
-        if (ObjectUtil.isNull(currentPage)) {
-            currentPage = 1;
-        }
-        if (ObjectUtil.isNull(pageSize)) {
-            pageSize = 10;
-        }
+    @GetMapping("/list")
+    public ResponseEntity<ApiResponse> list(@RequestParam(required = false) Integer currentPage,
+                                            @RequestParam(required = false) Integer pageSize,
+                                            @RequestParam(required = false) String jobName,
+                                            @RequestParam(required = false) String jobGroup) {
+        if (currentPage == null) currentPage = 1;
+        if (pageSize == null) pageSize = 10;
+
         PageResponse<JobAndTrigger> pageResponse = jobService.list(currentPage, pageSize, jobName, jobGroup);
-        return ResponseEntity.ok(ApiResponse.ok(Dict.create().set("total", pageResponse.getTotal()).set("data", pageResponse.getList())));
+        return ResponseEntity.ok(ApiResponse.ok(Dict.create()
+                .set("total", pageResponse.getTotal())
+                .set("data", pageResponse.getList())));
     }
 
 }
