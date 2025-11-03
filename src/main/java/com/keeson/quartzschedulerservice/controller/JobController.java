@@ -151,19 +151,19 @@ public class JobController {
      *
      * @param currentPage
      * @param pageSize
-     * @param jobName
-     * @param jobGroup
+     * @param jobDescription 任务描述
+     * @param jobGroup       任务组
      * @return
      */
     @GetMapping("/list")
     public ResponseEntity<ApiResponse> list(@RequestParam(required = false) Integer currentPage,
                                             @RequestParam(required = false) Integer pageSize,
-                                            @RequestParam(required = false) String jobName,
+                                            @RequestParam(required = false) String jobDescription,
                                             @RequestParam(required = false) String jobGroup) {
         if (currentPage == null) currentPage = 1;
         if (pageSize == null) pageSize = 10;
 
-        PageResponse<JobAndTrigger> pageResponse = jobService.list(currentPage, pageSize, jobName, jobGroup);
+        PageResponse<JobAndTrigger> pageResponse = jobService.list(currentPage, pageSize, jobDescription, jobGroup);
         return ResponseEntity.ok(ApiResponse.ok(Dict.create()
                 .set("total", pageResponse.getTotal())
                 .set("data", pageResponse.getList())));

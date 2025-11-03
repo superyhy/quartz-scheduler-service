@@ -146,8 +146,8 @@ public class JobServiceImpl implements JobService {
      * @return
      */
     @Override
-    public PageResponse<JobAndTrigger> list(Integer currentPage, Integer pageSize, String jobName, String jobGroup) {
-        IPage<JobAndTrigger> jobAndTriggerIPage = jobRepository.findAllJobs(currentPage, pageSize, jobName, jobGroup);
+    public PageResponse<JobAndTrigger> list(Integer currentPage, Integer pageSize, String jobDescription, String jobGroup) {
+        IPage<JobAndTrigger> jobAndTriggerIPage = jobRepository.findAllJobs(currentPage, pageSize, jobDescription, jobGroup);
         return new PageResponse<>(jobAndTriggerIPage.getRecords(), jobAndTriggerIPage.getTotal());
     }
 }

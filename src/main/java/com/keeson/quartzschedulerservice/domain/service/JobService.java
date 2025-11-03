@@ -63,5 +63,5 @@ public interface JobService {
      * @param pageSize    每页条数
      * @return 定时任务列表
      */
-    PageResponse<JobAndTrigger> list(Integer currentPage, Integer pageSize, String jobName, String jobGroup);
+    PageResponse<JobAndTrigger> list(Integer currentPage, Integer pageSize, String jobDescription, String jobGroup);
 }
