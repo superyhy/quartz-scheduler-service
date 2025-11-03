@@ -1,6 +1,8 @@
 package com.keeson.quartzschedulerservice.domain.entity.form;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import javax.validation.constraints.NotBlank;
 import java.util.List;
@@ -13,6 +15,8 @@ import java.util.List;
  * @describe
  */
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class JobDubboForm {
     /**
      * 定时任务描述

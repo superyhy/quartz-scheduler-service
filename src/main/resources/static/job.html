@@ -3,14 +3,14 @@
 
 <head>
     <meta charset="UTF-8">
-    <title>spring-boot-demo-task-quartz</title>
+    <title>Quartz 定时任务管理</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/element-ui/2.4.9/theme-chalk/index.css" rel="stylesheet">
     <script src="https://cdn.bootcss.com/vue/2.5.17/vue.min.js"></script>
     <script src="https://cdn.bootcss.com/vue-resource/1.5.1/vue-resource.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/element-ui/2.4.9/index.js"></script>
     <style>
         #top {
-            padding: 5px;
+            padding: 10px;
         }
     </style>
 </head>
@@ -24,7 +24,7 @@
     </div>
     <br/>
     <div>
-        <el-table ref="jobTable" :data="tableData" style="width:100%" border center>
+        <el-table ref="jobTable" :data="tableData" style="width:100%" border>
             <el-table-column prop="jobDescription" label="任务描述" show-overflow-tooltip
                              align="center"></el-table-column>
             <el-table-column prop="jobName" label="任务名称" align="center"></el-table-column>
@@ -48,10 +48,15 @@
             </el-table-column>
         </el-table>
 
-        <div align="center">
-            <el-pagination @size-change="handleSizeChange" @current-change="handleCurrentChange"
-                           :current-page="currentPage" :page-sizes="[10, 20, 30, 40]" :page-size="pagesize"
-                           layout="total, sizes, prev, pager, next, jumper" :total="totalCount">
+        <div align="center" style="margin-top: 15px;">
+            <el-pagination
+                    @size-change="handleSizeChange"
+                    @current-change="handleCurrentChange"
+                    :current-page="currentPage"
+                    :page-sizes="[10, 20, 30, 40]"
+                    :page-size="pagesize"
+                    layout="total, sizes, prev, pager, next, jumper"
+                    :total="totalCount">
             </el-pagination>
         </div>
     </div>
@@ -82,7 +87,7 @@
                 <el-input v-model="dubboForm.jobGroupName"></el-input>
             </el-form-item>
             <el-form-item label="Cron表达式">
-                <el-input v-model="dubboForm.cronExpression"></el-input>
+                <el-input v-model="dubboForm.cronExpression" placeholder="例如：*/3 * * * * ? (每3秒执行)"></el-input>
             </el-form-item>
             <el-form-item label="接口名">
                 <el-input v-model="dubboForm.interfaceName"></el-input>
@@ -113,10 +118,10 @@
         el: "#job",
         data: {
             tableData: [],
-            url: 'job',
+            url: '/job',
             pagesize: 10,
             currentPage: 1,
-            totalCount: 1000,
+            totalCount: 0,
             updateFormVisible: false,
             dubboDialogVisible: false,
             loading: false,
@@ -137,81 +142,93 @@
             }
         },
         methods: {
-            formatState: function (row) {
+            // 工具：从 jobName 提取 interfaceName、methodName
+            parseJobName(jobName) {
+                if (!jobName) return {interfaceName: '', methodName: ''};
+                const parts = jobName.split(':');
+                return {
+                    interfaceName: parts[0] || '',
+                    methodName: parts[1] || ''
+                };
+            },
+            formatState(row) {
                 if (row.triggerState === 'WAITING' || row.triggerState === 'ACQUIRED') return "运行中";
                 if (row.triggerState === 'PAUSED') return "暂停";
                 return "未知状态";
             },
-            loadData: function (currentPage, pageSize) {
+            loadData(currentPage, pageSize) {
                 this.loading = true;
-                this.$http.get('job?' + 'currentPage=' + currentPage + '&pageSize=' + pageSize).then(res => {
-                    this.tableData = res.body.data.data;
-                    this.totalCount = res.body.data.total;
+                this.$http.get(`${this.url}/list?currentPage=${currentPage}&pageSize=${pageSize}`).then(res => {
+                    const data = res.body.data;
+                    this.tableData = data.data;
+                    this.totalCount = data.total;
                     this.loading = false;
                 }, () => {
-                    console.log('failed');
+                    this.$message.error('任务列表加载失败');
                     this.loading = false;
                 });
             },
-            handleDelete: function (index, row) {
-                this.$http.delete('job', {
-                    params: {
-                        jobClassName: row.jobName,
-                        jobGroupName: row.jobGroup
-                    }
-                }, {emulateJSON: true})
-                    .then(res => {
-                        this.loadData(this.currentPage, this.pagesize);
-                    }, () => console.log('failed'));
+            handleDelete(index, row) {
+                const {interfaceName, methodName} = this.parseJobName(row.jobName);
+                this.$confirm('确认删除该任务吗？', '提示', {type: 'warning'})
+                    .then(() => {
+                        this.$http.delete(`${this.url}/delete`, {
+                            params: {
+                                interfaceName,
+                                methodName,
+                                jobGroupName: row.jobGroup
+                            }
+                        }).then(() => {
+                            this.$message.success('任务删除成功');
+                            this.loadData(this.currentPage, this.pagesize);
+                        }, () => this.$message.error('任务删除失败'));
+                    }).catch(() => {
+                });
             },
-            handlePause: function (index, row) {
-                this.$http.put('job?pause', {
-                    jobClassName: row.jobName,
-                    jobGroupName: row.jobGroup
-                }, {emulateJSON: true})
-                    .then(res => {
-                        this.loadData(this.currentPage, this.pagesize);
-                    }, () => console.log('failed'));
+            handlePause(index, row) {
+                const {interfaceName, methodName} = this.parseJobName(row.jobName);
+                this.$http.put(`${this.url}/pause`, null, {
+                    params: {interfaceName, methodName, jobGroupName: row.jobGroup}
+                }).then(() => {
+                    this.$message.success('任务已暂停');
+                    this.loadData(this.currentPage, this.pagesize);
+                }, () => this.$message.error('暂停失败'));
             },
-            handleResume: function (index, row) {
-                this.$http.put('job?resume', {
-                    jobClassName: row.jobName,
-                    jobGroupName: row.jobGroup
-                }, {emulateJSON: true})
-                    .then(res => {
-                        this.loadData(this.currentPage, this.pagesize);
-                    }, () => console.log('failed'));
+            handleResume(index, row) {
+                const {interfaceName, methodName} = this.parseJobName(row.jobName);
+                this.$http.put(`${this.url}/resume`, null, {
+                    params: {interfaceName, methodName, jobGroupName: row.jobGroup}
+                }).then(() => {
+                    this.$message.success('任务已恢复');
+                    this.loadData(this.currentPage, this.pagesize);
+                }, () => this.$message.error('恢复失败'));
             },
-            search: function () {
-                this.loadData(this.currentPage, this.pagesize);
-            },
-            handleUpdate: function (index, row) {
+            handleUpdate(index, row) {
                 this.updateFormVisible = true;
                 this.updateform.jobName = row.jobName;
                 this.updateform.jobGroup = row.jobGroup;
                 this.updateform.jobDescription = row.jobDescription;
                 this.updateform.cronExpression = row.cronExpression;
             },
-            update: function () {
-                this.$http.put('job?cron', {
-                    jobClassName: this.updateform.jobName,
-                    jobGroupName: this.updateform.jobGroup,
-                    cronExpression: this.updateform.cronExpression
-                }, {emulateJSON: true})
-                    .then(res => {
-                        this.loadData(this.currentPage, this.pagesize);
-                        this.updateFormVisible = false;
-                    }, () => console.log('failed'));
+            update() {
+                const {interfaceName, methodName} = this.parseJobName(this.updateform.jobName);
+                const params = new URLSearchParams();
+                params.append('jobDescription', this.updateform.jobDescription);
+                params.append('interfaceName', interfaceName);
+                params.append('methodName', methodName);
+                params.append('jobGroupName', this.updateform.jobGroup);
+                params.append('cronExpression', this.updateform.cronExpression);
+
+                this.$http.put(`${this.url}/update?${params.toString()}`).then(() => {
+                    this.$message.success('Cron表达式修改成功');
+                    this.updateFormVisible = false;
+                    this.loadData(this.currentPage, this.pagesize);
+                }, err => {
+                    console.error(err);
+                    this.$message.error('Cron表达式修改失败');
+                });
             },
-            handleSizeChange: function (val) {
-                this.pagesize = val;
-                this.loadData(this.currentPage, this.pagesize);
-            },
-            handleCurrentChange: function (val) {
-                this.currentPage = val;
-                this.loadData(this.currentPage, this.pagesize);
-            },
-            handleAddDubbo: function () {
+            handleAddDubbo() {
                 this.dubboDialogVisible = true;
                 this.dubboForm = {
                     jobDescribe: '',
@@ -223,10 +240,10 @@
                     paramValues: ''
                 };
             },
-            addDubbo: function () {
+            addDubbo() {
                 let paramTypesArr = this.dubboForm.paramTypes ? this.dubboForm.paramTypes.split(',') : [];
                 let paramValuesArr = this.dubboForm.paramValues ? this.dubboForm.paramValues.split(',') : [];
-                this.$http.post('/job/add_dubbo', {
+                this.$http.post(`${this.url}/add`, {
                     jobDescribe: this.dubboForm.jobDescribe,
                     jobGroupName: this.dubboForm.jobGroupName,
                     cronExpression: this.dubboForm.cronExpression,
@@ -234,30 +251,32 @@
                     methodName: this.dubboForm.methodName,
                     paramTypes: paramTypesArr,
                     paramValues: paramValuesArr
-                }, {
-                    headers: {
-                        'Content-Type': 'application/json'
-                    }
-                }).then(res => {
-                    const data = res.body;
-                    if (data && data.code === 200) {
+                }, {headers: {'Content-Type': 'application/json'}})
+                    .then(res => {
                         this.$message.success('RPC任务添加成功');
                         this.dubboDialogVisible = false;
                         this.loadData(this.currentPage, this.pagesize);
-                    } else {
-                        this.$message.error(data && data.msg ? data.msg : 'RPC任务添加失败');
-                    }
-                }, err => {
-                    console.error(err);
-                    this.$message.error('RPC任务添加失败');
-                });
+                    }, err => {
+                        console.error(err);
+                        this.$message.error('RPC任务添加失败');
+                    });
+            },
+            handleSizeChange(val) {
+                this.pagesize = val;
+                this.loadData(this.currentPage, this.pagesize);
+            },
+            handleCurrentChange(val) {
+                this.currentPage = val;
+                this.loadData(this.currentPage, this.pagesize);
+            },
+            search() {
+                this.loadData(this.currentPage, this.pagesize);
             }
+        },
+        mounted() {
+            this.loadData(this.currentPage, this.pagesize);
         }
     });
-
-    // 载入数据
-    vue.loadData(vue.currentPage, vue.pagesize);
 </script>
 </body>
-
 </html>

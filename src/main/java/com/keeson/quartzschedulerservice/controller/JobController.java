@@ -34,6 +34,12 @@ public class JobController {
         this.jobService = jobService;
     }
 
+    /**
+     * 添加RPC任务
+     *
+     * @param form
+     * @return
+     */
     @PostMapping("/add")
     public ResponseEntity<ApiResponse> add(@RequestBody @Valid JobDubboForm form) {
         try {
@@ -44,6 +50,14 @@ public class JobController {
         }
     }
 
+    /**
+     * 删除任务
+     *
+     * @param interfaceName
+     * @param methodName
+     * @param jobGroupName
+     * @return
+     */
     @DeleteMapping("/delete")
     public ResponseEntity<ApiResponse> delete(@RequestParam String interfaceName,
                                               @RequestParam String methodName,
@@ -60,6 +74,14 @@ public class JobController {
         }
     }
 
+    /**
+     * 暂停任务
+     *
+     * @param interfaceName
+     * @param methodName
+     * @param jobGroupName
+     * @return
+     */
     @PutMapping("/pause")
     public ResponseEntity<ApiResponse> pause(@RequestParam String interfaceName,
                                              @RequestParam String methodName,
@@ -76,6 +98,14 @@ public class JobController {
         }
     }
 
+    /**
+     * 恢复任务
+     *
+     * @param interfaceName
+     * @param methodName
+     * @param jobGroupName
+     * @return
+     */
     @PutMapping("/resume")
     public ResponseEntity<ApiResponse> resume(@RequestParam String interfaceName,
                                               @RequestParam String methodName,
@@ -92,16 +122,39 @@ public class JobController {
         }
     }
 
-    @PutMapping("/update-cron")
-    public ResponseEntity<ApiResponse> updateCron(@RequestBody @Valid JobDubboForm form) {
+    /**
+     * 修改任务
+     *
+     * @param jobDescription
+     * @param interfaceName
+     * @param methodName
+     * @param jobGroupName
+     * @param cronExpression
+     * @return
+     */
+    @PutMapping("/update")
+    public ResponseEntity<ApiResponse> updateCron(@RequestParam String jobDescription,
+                                                  @RequestParam String interfaceName,
+                                                  @RequestParam String methodName,
+                                                  @RequestParam String jobGroupName,
+                                                  @RequestParam String cronExpression) {
         try {
-            jobService.cronJob(form);
+            jobService.cronJob(new JobDubboForm(jobDescription, jobGroupName, cronExpression, interfaceName, methodName, null, null));
             return ResponseEntity.ok(ApiResponse.msg("Cron表达式修改成功"));
         } catch (Exception e) {
             return new ResponseEntity<>(ApiResponse.msg("修改失败: " + e.getMessage()), HttpStatus.INTERNAL_SERVER_ERROR);
         }
     }
 
+    /**
+     * 分页
+     *
+     * @param currentPage
+     * @param pageSize
+     * @param jobName
+     * @param jobGroup
+     * @return
+     */
     @GetMapping("/list")
     public ResponseEntity<ApiResponse> list(@RequestParam(required = false) Integer currentPage,
                                             @RequestParam(required = false) Integer pageSize,
