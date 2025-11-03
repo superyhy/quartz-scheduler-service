@@ -86,8 +86,8 @@
     </el-dialog>
 
     <!-- 添加RPC任务对话框 -->
-    <el-dialog title="添加RPC任务" :visible.sync="dubboDialogVisible" :rules="dubboRules" width="600px">
-        <el-form :model="dubboForm" label-width="120px">
+    <el-dialog title="添加RPC任务" :visible.sync="dubboDialogVisible" width="600px">
+        <el-form :model="dubboForm" ref="dubboForm" :rules="dubboRules" label-width="120px">
             <el-form-item label="任务描述" prop="jobDescribe">
                 <el-input v-model="dubboForm.jobDescribe"></el-input>
             </el-form-item>
@@ -234,21 +234,24 @@
                 this.updateform.cronExpression = row.cronExpression;
             },
             update() {
-                const {interfaceName, methodName} = this.parseJobName(this.updateform.jobName);
-                const params = new URLSearchParams();
-                params.append('jobDescription', this.updateform.jobDescription);
-                params.append('interfaceName', interfaceName);
-                params.append('methodName', methodName);
-                params.append('jobGroupName', this.updateform.jobGroup);
-                params.append('cronExpression', this.updateform.cronExpression);
+                this.$refs.updateform.validate(valid => {
+                    if (!valid) return; // 校验不通过阻止提交
+                    const {interfaceName, methodName} = this.parseJobName(this.updateform.jobName);
+                    const params = new URLSearchParams();
+                    params.append('jobDescription', this.updateform.jobDescription);
+                    params.append('interfaceName', interfaceName);
+                    params.append('methodName', methodName);
+                    params.append('jobGroupName', this.updateform.jobGroup);
+                    params.append('cronExpression', this.updateform.cronExpression);
 
-                this.$http.put(`${this.url}/update?${params.toString()}`).then(() => {
-                    this.$message.success('Cron表达式修改成功');
-                    this.updateFormVisible = false;
-                    this.loadData(this.currentPage, this.pagesize);
-                }, err => {
-                    console.error(err);
-                    this.$message.error('Cron表达式修改失败');
+                    this.$http.put(`${this.url}/update?${params.toString()}`).then(() => {
+                        this.$message.success('Cron表达式修改成功');
+                        this.updateFormVisible = false;
+                        this.loadData(this.currentPage, this.pagesize);
+                    }, err => {
+                        console.error(err);
+                        this.$message.error('Cron表达式修改失败');
+                    });
                 });
             },
             handleAddDubbo() {
@@ -264,25 +267,28 @@
                 };
             },
             addDubbo() {
-                let paramTypesArr = this.dubboForm.paramTypes ? this.dubboForm.paramTypes.split(',') : [];
-                let paramValuesArr = this.dubboForm.paramValues ? this.dubboForm.paramValues.split(',') : [];
-                this.$http.post(`${this.url}/add`, {
-                    jobDescribe: this.dubboForm.jobDescribe,
-                    jobGroupName: this.dubboForm.jobGroupName,
-                    cronExpression: this.dubboForm.cronExpression,
-                    interfaceName: this.dubboForm.interfaceName,
-                    methodName: this.dubboForm.methodName,
-                    paramTypes: paramTypesArr,
-                    paramValues: paramValuesArr
-                }, {headers: {'Content-Type': 'application/json'}})
-                    .then(res => {
-                        this.$message.success('RPC任务添加成功');
-                        this.dubboDialogVisible = false;
-                        this.loadData(this.currentPage, this.pagesize);
-                    }, err => {
-                        console.error(err);
-                        this.$message.error('RPC任务添加失败');
-                    });
+                this.$refs.dubboForm.validate(valid => {
+                    if (!valid) return; // 校验不通过阻止提交
+                    let paramTypesArr = this.dubboForm.paramTypes ? this.dubboForm.paramTypes.split(',') : [];
+                    let paramValuesArr = this.dubboForm.paramValues ? this.dubboForm.paramValues.split(',') : [];
+                    this.$http.post(`${this.url}/add`, {
+                        jobDescribe: this.dubboForm.jobDescribe,
+                        jobGroupName: this.dubboForm.jobGroupName,
+                        cronExpression: this.dubboForm.cronExpression,
+                        interfaceName: this.dubboForm.interfaceName,
+                        methodName: this.dubboForm.methodName,
+                        paramTypes: paramTypesArr,
+                        paramValues: paramValuesArr
+                    }, {headers: {'Content-Type': 'application/json'}})
+                        .then(res => {
+                            this.$message.success('RPC任务添加成功');
+                            this.dubboDialogVisible = false;
+                            this.loadData(this.currentPage, this.pagesize);
+                        }, err => {
+                            console.error(err);
+                            this.$message.error('RPC任务添加失败');
+                        });
+                });
             },
             handleSizeChange(val) {
                 this.pagesize = val;
